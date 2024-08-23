@@ -132,17 +132,16 @@ class SOMatrixBase(_base.SOMatrixBase):
         # S = torch.eye(self.dim)
         # if U.is_cuda:
         #     S = S.cuda()
-        # S[self.dim - 1, self.dim - 1] = float(np.linalg.det(U.cpu().numpy()) *
-        #                                       np.linalg.det(V.cpu().numpy()))
+        # S[self.dim - 1, self.dim - 1] = float(torch.linalg.det(U) *
+        #                                       torch.linalg.det(V))
         # mat_normalized = U.mm(S).mm(V.t_())
 
         # pytorch SVD seems to be inaccurate, so just move to numpy immediately
-        mat_cpu = mat.detach().cpu().numpy().squeeze()
-        U, _, V = np.linalg.svd(mat_cpu, full_matrices=False)
-        S = np.eye(self.dim)
-        S[self.dim - 1, self.dim - 1] = np.linalg.det(U) * np.linalg.det(V)
+        U, _, V = torch.linalg.svd(mat, full_matrices=False)
+        S = torch.eye(self.dim, device=mat.device)
+        S[self.dim - 1, self.dim - 1] = torch.linalg.det(U) * torch.linalg.det(V)
 
-        mat_normalized = mat.__class__(U.dot(S).dot(V))
+        mat_normalized = mat.__class__(U.mm(S).mm(V))
 
         mat.copy_(mat_normalized)
         return mat
