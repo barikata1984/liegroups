@@ -100,10 +100,9 @@ class SOMatrixBase(_base.SOMatrixBase):
             mat = mat.unsqueeze(dim=0)
 
         # Check the shape
+        shape_check = torch.tensor(mat.shape[0], dtype=bool).fill_(False)
         if mat.is_cuda:
-            shape_check = torch.cuda.BoolTensor(mat.shape[0]).fill_(False)
-        else:
-            shape_check = torch.BoolTensor(mat.shape[0]).fill_(False)
+            shape_check = shape_check.cuda()
 
         if mat.shape[1:3] != (cls.dim, cls.dim):
             return shape_check
@@ -112,11 +111,12 @@ class SOMatrixBase(_base.SOMatrixBase):
 
         # Determinants of each matrix in the batch should be 1
         det_check = utils.isclose(mat.__class__(
-            np.linalg.det(mat.detach().cpu().numpy())), 1.)
+            torch.linalg.det(mat)), 1.)
 
         # The transpose of each matrix in the batch should be its inverse
         inv_check = utils.isclose(mat.transpose(2, 1).bmm(mat),
-                                  torch.eye(cls.dim, dtype=mat.dtype)).sum(dim=1).sum(dim=1) \
+                                  torch.eye(cls.dim).to(dtype=mat.dtype, device=mat.device),
+                                  ).sum(dim=1).sum(dim=1) \
             == cls.dim * cls.dim
 
         return shape_check & det_check & inv_check
@@ -345,10 +345,9 @@ class SEMatrixBase(_base.SEMatrixBase):
             mat = mat.unsqueeze(dim=0)
 
         # Check the shape
+        shape_check = torch.tensor(mat.shape[0], dtype=bool).fill_(False)
         if mat.is_cuda:
-            shape_check = torch.cuda.BoolTensor(mat.shape[0]).fill_(False)
-        else:
-            shape_check = torch.BoolTensor(mat.shape[0]).fill_(False)
+            shape_check = shape_check.cuda()
 
         if mat.shape[1:3] != (cls.dim, cls.dim):
             return shape_check
