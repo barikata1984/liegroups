@@ -1,5 +1,4 @@
 import torch
-import numpy as np  # for matrix determinant and SVD
 
 from .. import _base
 from . import utils
